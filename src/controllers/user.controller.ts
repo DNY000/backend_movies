@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/user.service.js';
+import { sendSuccess, sendError, sendNotFound, sendBadRequest } from '../utils/response.util.js';
+import { HttpStatus } from '../types/common.types.js';
+import { validate } from '../utils/validation.util.js';
 
 export class UserController {
   private userService: UserService;
@@ -12,17 +15,9 @@ export class UserController {
   async getAllUsers(req: Request, res: Response): Promise<void> {
     try {
       const users = await this.userService.getAllUsers();
-      res.status(200).json({
-        success: true,
-        data: users,
-        message: 'Users retrieved successfully'
-      });
+      sendSuccess(res, users, 'Users retrieved successfully');
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Error retrieving users',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      sendError(res, 'Error retrieving users', error instanceof Error ? error.message : 'Unknown error');
     }
   }
 
@@ -33,44 +28,35 @@ export class UserController {
       const user = await this.userService.getUserById(id);
       
       if (!user) {
-        res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-        return;
+        return sendNotFound(res, 'User not found');
       }
 
-      res.status(200).json({
-        success: true,
-        data: user,
-        message: 'User retrieved successfully'
-      });
+      sendSuccess(res, user, 'User retrieved successfully');
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Error retrieving user',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      sendError(res, 'Error retrieving user', error instanceof Error ? error.message : 'Unknown error');
     }
   }
 
   // POST /api/users
+  // Note: Basic validation handled by validateUserBasic middleware
   async createUser(req: Request, res: Response): Promise<void> {
     try {
+      // Advanced validation (business rules) can be done here
       const userData = req.body;
+      
+      // Example: Check for duplicate usernames if provided
+      if (userData.username) {
+        const existingUser = await this.userService.getUserByEmail(userData.email);
+        if (existingUser) {
+          return sendBadRequest(res, 'User with this email already exists');
+        }
+      }
+      
       const newUser = await this.userService.createUser(userData);
       
-      res.status(201).json({
-        success: true,
-        data: newUser,
-        message: 'User created successfully'
-      });
+      sendSuccess(res, newUser, 'User created successfully', HttpStatus.CREATED);
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Error creating user',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      sendError(res, 'Error creating user', error instanceof Error ? error.message : 'Unknown error');
     }
   }
 
@@ -82,24 +68,12 @@ export class UserController {
       const updatedUser = await this.userService.updateUser(id, updateData);
       
       if (!updatedUser) {
-        res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-        return;
+        return sendNotFound(res, 'User not found');
       }
 
-      res.status(200).json({
-        success: true,
-        data: updatedUser,
-        message: 'User updated successfully'
-      });
+      sendSuccess(res, updatedUser, 'User updated successfully');
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Error updating user',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      sendError(res, 'Error updating user', error instanceof Error ? error.message : 'Unknown error');
     }
   }
 
@@ -110,23 +84,12 @@ export class UserController {
       const deleted = await this.userService.deleteUser(id);
       
       if (!deleted) {
-        res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-        return;
+        return sendNotFound(res, 'User not found');
       }
 
-      res.status(200).json({
-        success: true,
-        message: 'User deleted successfully'
-      });
+      sendSuccess(res, null, 'User deleted successfully');
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Error deleting user',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      sendError(res, 'Error deleting user', error instanceof Error ? error.message : 'Unknown error');
     }
   }
 }

@@ -35,4 +35,16 @@ export class UserService {
   async updateUserProfile(id: string, profileData: Partial<User>): Promise<User | null> {
     return await this.userRepository.updateProfile(id, profileData);
   }
+
+  async updateRefreshToken(userId: string, refreshToken: string, expiresAt: Date): Promise<void> {
+    await this.userRepository.updateRefreshToken(userId, refreshToken, expiresAt);
+  }
+
+  async getUserByRefreshToken(refreshToken: string): Promise<User | null> {
+    return await this.userRepository.findByRefreshToken(refreshToken);
+  }
+
+  async clearRefreshToken(userId: string): Promise<void> {
+    await this.userRepository.clearRefreshToken(userId);
+  }
 }

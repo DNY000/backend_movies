@@ -1,162 +1,58 @@
-import { Request, Response, NextFunction } from 'express';
+import { validate } from '../utils/validation.util.js';
+import { createValidation } from './validation.factory.js';
 
-// Validation for movie data
-export const validateMovie = (req: Request, res: Response, next: NextFunction): void => {
-  const { title, description, genre, director, year, duration, rating } = req.body;
+/**
+ * Common Validation Middleware - Sử dụng cho validation cơ bản
+ * Dùng middleware cho các validation đơn giản, thường xuyên sử dụng
+ */
 
-  if (!title || typeof title !== 'string' || title.trim().length === 0) {
-    res.status(400).json({
-      success: false,
-      message: 'Title is required and must be a non-empty string'
-    });
-    return;
-  }
+// Auth validation middleware
+export const validateLogin = createValidation.body({
+  email: validate.field('Email').required().email(),
+  password: validate.field('Password').required().length(6, 50),
+});
 
-  if (!description || typeof description !== 'string' || description.trim().length === 0) {
-    res.status(400).json({
-      success: false,
-      message: 'Description is required and must be a non-empty string'
-    });
-    return;
-  }
+export const validateRegister = createValidation.body({
+  email: validate.field('Email').required().email(),
+  password: validate.field('Password').required().length(6, 50),
+  name: validate.field('Name').required().length(2, 100),
+});
 
-  if (!genre || !Array.isArray(genre) || genre.length === 0) {
-    res.status(400).json({
-      success: false,
-      message: 'Genre is required and must be a non-empty array'
-    });
-    return;
-  }
+// Movie validation middleware (basic fields only)
+export const validateMovieBasic = createValidation.body({
+  title: validate.field('Title').required().length(1, 200),
+  description: validate.field('Description').required().length(10, 1000),
+  durationMinutes: validate.field('Duration').required().range(1, 600),
+});
 
-  if (!director || typeof director !== 'string' || director.trim().length === 0) {
-    res.status(400).json({
-      success: false,
-      message: 'Director is required and must be a non-empty string'
-    });
-    return;
-  }
+// User validation middleware
+export const validateUserBasic = createValidation.body({
+  email: validate.field('Email').required().email(),
+  name: validate.field('Name').required().length(2, 100),
+});
 
-  if (!year || typeof year !== 'number' || year < 1900 || year > new Date().getFullYear() + 5) {
-    res.status(400).json({
-      success: false,
-      message: 'Year is required and must be a valid year'
-    });
-    return;
-  }
+// Booking validation middleware
+export const validateBookingBasic = createValidation.body({
+  userId: validate.field('User ID').required(),
+  showtimeId: validate.field('Showtime ID').required(),
+  seatIds: validate.field('Seat IDs').required().array(1),
+});
 
-  if (!duration || typeof duration !== 'number' || duration <= 0) {
-    res.status(400).json({
-      success: false,
-      message: 'Duration is required and must be a positive number'
-    });
-    return;
-  }
+// Payment validation middleware
+export const validatePaymentBasic = createValidation.body({
+  bookingId: validate.field('Booking ID').required(),
+  userId: validate.field('User ID').required(),
+  amount: validate.field('Amount').required().range(1, 10000000),
+  method: validate.field('Payment Method').required(),
+});
 
-  if (rating !== undefined && (typeof rating !== 'number' || rating < 0 || rating > 10)) {
-    res.status(400).json({
-      success: false,
-      message: 'Rating must be a number between 0 and 10'
-    });
-    return;
-  }
+// ID validation middleware
+export const validateId = createValidation.params({
+  id: validate.field('ID').required().length(1, 50),
+});
 
-  next();
-};
-
-// Validation for login data
-export const validateLogin = (req: Request, res: Response, next: NextFunction): void => {
-  const { email, password } = req.body;
-
-  if (!email || typeof email !== 'string' || !email.includes('@')) {
-    res.status(400).json({
-      success: false,
-      message: 'Valid email is required'
-    });
-    return;
-  }
-
-  if (!password || typeof password !== 'string' || password.length < 6) {
-    res.status(400).json({
-      success: false,
-      message: 'Password is required and must be at least 6 characters'
-    });
-    return;
-  }
-
-  next();
-};
-
-// Validation for registration data
-export const validateRegister = (req: Request, res: Response, next: NextFunction): void => {
-  const { email, password, name } = req.body;
-
-  if (!email || typeof email !== 'string' || !email.includes('@')) {
-    res.status(400).json({
-      success: false,
-      message: 'Valid email is required'
-    });
-    return;
-  }
-
-  if (!password || typeof password !== 'string' || password.length < 6) {
-    res.status(400).json({
-      success: false,
-      message: 'Password is required and must be at least 6 characters'
-    });
-    return;
-  }
-
-  if (!name || typeof name !== 'string' || name.trim().length === 0) {
-    res.status(400).json({
-      success: false,
-      message: 'Name is required and must be a non-empty string'
-    });
-    return;
-  }
-
-  next();
-};
-
-// Validation for booking creation
-export const validateCreateBooking = (req: Request, res: Response, next: NextFunction): void => {
-  const { userId, showtimeId, seatIds, promotionCode } = req.body;
-  if (!userId || typeof userId !== 'string') {
-    res.status(400).json({ success: false, message: 'userId is required' });
-    return;
-  }
-  if (!showtimeId || typeof showtimeId !== 'string') {
-    res.status(400).json({ success: false, message: 'showtimeId is required' });
-    return;
-  }
-  if (!Array.isArray(seatIds) || seatIds.length === 0 || !seatIds.every((s: any) => typeof s === 'string')) {
-    res.status(400).json({ success: false, message: 'seatIds must be a non-empty string array' });
-    return;
-  }
-  if (promotionCode && typeof promotionCode !== 'string') {
-    res.status(400).json({ success: false, message: 'promotionCode must be a string' });
-    return;
-  }
-  next();
-};
-
-// Validation for payment capture
-export const validateCapturePayment = (req: Request, res: Response, next: NextFunction): void => {
-  const { bookingId, userId, amount, method } = req.body;
-  if (!bookingId || typeof bookingId !== 'string') {
-    res.status(400).json({ success: false, message: 'bookingId is required' });
-    return;
-  }
-  if (!userId || typeof userId !== 'string') {
-    res.status(400).json({ success: false, message: 'userId is required' });
-    return;
-  }
-  if (typeof amount !== 'number' || amount <= 0) {
-    res.status(400).json({ success: false, message: 'amount must be a positive number' });
-    return;
-  }
-  if (!method || typeof method !== 'string') {
-    res.status(400).json({ success: false, message: 'method is required' });
-    return;
-  }
-  next();
-};
+// Pagination validation middleware
+export const validatePagination = createValidation.query({
+  page: validate.field('Page').range(1, 1000),
+  limit: validate.field('Limit').range(1, 100),
+});

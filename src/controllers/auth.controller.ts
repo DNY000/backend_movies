@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service.js';
+import { sendSuccess, sendError, sendBadRequest, sendUnauthorized } from '../utils/response.util.js';
+import { HttpStatus } from '../types/common.types.js';
+import { validate } from '../utils/validation.util.js';
 
 export class AuthController {
   private authService: AuthService;
@@ -9,59 +12,67 @@ export class AuthController {
   }
 
   // POST /api/auth/register
+  // Note: Basic validation handled by validateRegister middleware
   async register(req: Request, res: Response): Promise<void> {
     try {
+      // Advanced validation (business rules) can be done here if needed
+      // Basic validation (email, password, name) is handled by middleware
+      
       const userData = req.body;
       const result = await this.authService.register(userData);
       
-      res.status(201).json({
-        success: true,
-        data: result,
-        message: 'User registered successfully'
-      });
+      sendSuccess(res, result, 'User registered successfully', HttpStatus.CREATED);
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: 'Registration failed',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      sendError(res, 'Registration failed', error instanceof Error ? error.message : 'Unknown error', HttpStatus.BAD_REQUEST);
     }
   }
 
   // POST /api/auth/login
+  // Note: Basic validation handled by validateLogin middleware
   async login(req: Request, res: Response): Promise<void> {
     try {
+      // Basic validation (email, password) is handled by middleware
       const { email, password } = req.body;
       const result = await this.authService.login(email, password);
       
-      res.status(200).json({
-        success: true,
-        data: result,
-        message: 'Login successful'
-      });
+      sendSuccess(res, result, 'Login successful');
     } catch (error) {
-      res.status(401).json({
-        success: false,
-        message: 'Login failed',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      sendUnauthorized(res, 'Login failed');
     }
   }
 
   // POST /api/auth/logout
   async logout(req: Request, res: Response): Promise<void> {
     try {
-      // Implementation for logout (invalidate token, etc.)
-      res.status(200).json({
-        success: true,
-        message: 'Logout successful'
-      });
+      const userId = (req as any).user?.id;
+      if (userId) {
+        await this.authService.logout(userId);
+      }
+      
+      sendSuccess(res, null, 'Logout successful');
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Logout failed',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      sendError(res, 'Logout failed', error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+
+  // POST /api/auth/refresh
+  async refresh(req: Request, res: Response): Promise<void> {
+    try {
+      const { refreshToken } = req.body;
+      
+      if (!refreshToken) {
+        return sendBadRequest(res, 'Refresh token is required');
+      }
+
+      const result = await this.authService.refreshAccessToken(refreshToken);
+      
+      if (!result) {
+        return sendUnauthorized(res, 'Invalid or expired refresh token');
+      }
+
+      sendSuccess(res, result, 'Tokens refreshed successfully');
+    } catch (error) {
+      sendError(res, 'Token refresh failed', error instanceof Error ? error.message : 'Unknown error');
     }
   }
 
@@ -72,17 +83,9 @@ export class AuthController {
       const userId = (req as any).user?.id;
       const user = await this.authService.getProfile(userId);
       
-      res.status(200).json({
-        success: true,
-        data: user,
-        message: 'Profile retrieved successfully'
-      });
+      sendSuccess(res, user, 'Profile retrieved successfully');
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Error retrieving profile',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      sendError(res, 'Error retrieving profile', error instanceof Error ? error.message : 'Unknown error');
     }
   }
 }

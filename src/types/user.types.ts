@@ -7,6 +7,8 @@ export interface User {
   avatar?: string;
   role: UserRole;
   isActive: boolean;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

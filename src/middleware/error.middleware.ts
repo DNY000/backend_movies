@@ -11,7 +11,6 @@ export const errorHandler = (
   // Default error response
   let statusCode = 500;
   let message = 'Internal server error';
-
   // Handle specific error types
   if (error.name === 'ValidationError') {
     statusCode = 400;

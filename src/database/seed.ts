@@ -53,7 +53,8 @@ async function seed() {
     email: 'admin@example.com',
     name: 'Admin',
     role: 'admin',
-    passwordHash: '$2b$10$PZs0oJbCjH2c0rN0K0K0uO3qf1f2cJc3m5Qq4Tt9uWwXxYyZzAaBC' // dummy hash
+    password: '$2b$10$PZs0oJbCjH2c0rN0K0K0uO3qf1f2cJc3m5Qq4Tt9uWwXxYyZzAaBC', // dummy hash
+    isActive: true
   })
 
   // Cinema + one room

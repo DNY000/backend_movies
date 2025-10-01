@@ -20,8 +20,9 @@ export class DatabaseConnection {
     }
 
     try {
-      const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/movies_db';
-      
+      const mongoUri = "mongodb+srv://duynv5548:Duy000.dl@duy.q3nbviw.mongodb.net/movies_db?retryWrites=true&w=majority&appName=movies_db"
+      // process.env.MONGODB_URI || 'mongodb://localhost:27017/movies_db';
+      // const mogoUrl = "mongodb+srv://duynv5548:Duy000.dl@duy.q3nbviw.mongodb.net/movies_db?retryWrites=true&w=majority&appName=movies_db"
       await mongoose.connect(mongoUri, {
         // Remove deprecated options for newer versions
       });

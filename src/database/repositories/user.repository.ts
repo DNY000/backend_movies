@@ -14,9 +14,12 @@ export class UserRepository {
     const created = await UserModel.create({
       email: userData.email,
       name: userData.name,
+      username: userData.username,
       phone: (userData as any).phone,
-      passwordHash: (userData as any).password || (userData as any).passwordHash,
-      role: (userData as any).role || 'customer',
+      password: userData.password,
+      avatar: userData.avatar,
+      role: userData.role || 'user',
+      isActive: userData.isActive !== undefined ? userData.isActive : true,
       metadata: (userData as any).metadata
     } as any)
     return created.toObject()
@@ -42,5 +45,22 @@ export class UserRepository {
       if ((profileData as any)[key] !== undefined) filtered[key] = (profileData as any)[key]
     }
     return await UserModel.findByIdAndUpdate(id, filtered, { new: true }).lean()
+  }
+
+  async updateRefreshToken(userId: string, refreshToken: string, expiresAt: Date): Promise<void> {
+    await UserModel.findByIdAndUpdate(userId, {
+      refreshToken,
+      refreshTokenExpiresAt: expiresAt
+    })
+  }
+
+  async findByRefreshToken(refreshToken: string): Promise<any | null> {
+    return await UserModel.findOne({ refreshToken }).lean()
+  }
+
+  async clearRefreshToken(userId: string): Promise<void> {
+    await UserModel.findByIdAndUpdate(userId, {
+      $unset: { refreshToken: 1, refreshTokenExpiresAt: 1 }
+    })
   }
 }

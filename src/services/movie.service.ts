@@ -1,6 +1,28 @@
 import { Movie } from '../types/movie.types.js';
 import { MovieRepository } from '../database/repositories/movie.repository.js';
 
+export interface MovieFilters {
+  search?: string;
+  genre?: string;
+  year?: number;
+  rating?: number;
+  trending?: boolean;
+  mostPopular?: boolean;
+  page: number;
+  limit: number;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
+
+export interface MovieSearchResult {
+  movies: Movie[];
+  total: number;
+  page: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export class MovieService {
   private movieRepository: MovieRepository;
 
@@ -38,5 +60,25 @@ export class MovieService {
 
   async getMoviesByYear(year: number): Promise<Movie[]> {
     return await this.movieRepository.findByYear(year);
+  }
+
+  async getMoviesWithFilters(filters: MovieFilters): Promise<MovieSearchResult> {
+    return await this.movieRepository.findWithFilters(filters);
+  }
+
+  async getTrendingMovies(limit: number = 10): Promise<Movie[]> {
+    return await this.movieRepository.findTrending(limit);
+  }
+
+  async getMostPopularMovies(limit: number = 10): Promise<Movie[]> {
+    return await this.movieRepository.findMostPopular(limit);
+  }
+
+  async getUpcomingMovies(limit: number = 10): Promise<Movie[]> {
+    return await this.movieRepository.findUpcoming(limit);
+  }
+
+  async getNowShowingMovies(limit: number = 10): Promise<Movie[]> {
+    return await this.movieRepository.findNowShowing(limit);
   }
 }

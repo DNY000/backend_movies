@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { User, UserRole } from '../types/user.types.js';
 import { UserService } from './user.service.js';
 
@@ -17,7 +18,7 @@ export class AuthService {
     password: string;
     name: string;
     username?: string;
-  }): Promise<{ user: User; token: string }> {
+  }): Promise<{ user: User; accessToken: string; refreshToken: string }> {
     // Check if user already exists
     const existingUser = await this.userService.getUserByEmail(userData.email);
     if (existingUser) {
@@ -35,16 +36,18 @@ export class AuthService {
       isActive: false
     });
 
-    // Generate JWT token
-    const token = this.generateToken(newUser.id);
+    // Generate tokens
+    const accessToken = this.generateAccessToken(newUser.id);
+    const refreshToken = await this.generateRefreshToken(newUser.id);
 
     return {
       user: newUser,
-      token,
+      accessToken,
+      refreshToken,
     };
   }
 
-  async login(email: string, password: string): Promise<{ user: User; token: string }> {
+  async login(email: string, password: string): Promise<{ user: User; accessToken: string; refreshToken: string }> {
     // Find user by email
     const user = await this.userService.getUserByEmail(email);
     if (!user) {
@@ -57,12 +60,14 @@ export class AuthService {
       throw new Error('Invalid credentials');
     }
 
-    // Generate JWT token
-    const token = this.generateToken(user.id);
+    // Generate tokens
+    const accessToken = this.generateAccessToken(user.id);
+    const refreshToken = await this.generateRefreshToken(user.id);
 
     return {
       user,
-      token,
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -70,12 +75,40 @@ export class AuthService {
     return await this.userService.getUserById(userId);
   }
 
-  private generateToken(userId: string): string {
+  private generateAccessToken(userId: string): string {
     return jwt.sign(
-      { userId },
+      { userId, type: 'access' },
       this.jwtSecret,
-      { expiresIn: '24h' }
+      { expiresIn: '15m' } // Short-lived access token
     );
+  }
+
+  private async generateRefreshToken(userId: string): Promise<string> {
+    const refreshToken = crypto.randomBytes(64).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+
+    // Save refresh token to database
+    await this.userService.updateRefreshToken(userId, refreshToken, expiresAt);
+    
+    return refreshToken;
+  }
+
+  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string } | null> {
+    const user = await this.userService.getUserByRefreshToken(refreshToken);
+    
+    if (!user || !user.refreshTokenExpiresAt || user.refreshTokenExpiresAt < new Date()) {
+      return null;
+    }
+
+    // Generate new tokens
+    const newAccessToken = this.generateAccessToken(user.id);
+    const newRefreshToken = await this.generateRefreshToken(user.id);
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
   }
 
   verifyToken(token: string): { userId: string } | null {
@@ -84,5 +117,10 @@ export class AuthService {
     } catch (error) {
       return null;
     }
+  }
+
+  async logout(userId: string): Promise<void> {
+    // Clear refresh token from database
+    await this.userService.clearRefreshToken(userId);
   }
 }

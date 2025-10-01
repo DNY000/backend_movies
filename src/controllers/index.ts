@@ -5,28 +5,48 @@
  * Controllers handle HTTP requests and responses.
  */
 
-// Export all controllers (using simple versions to avoid dependency issues)
-export * from './movie.controller.simple';
-// export * from './user.controller';
-// export * from './auth.controller';
+// Import controllers
+import { MovieController } from './movie.controller.js';
+import { UserController } from './user.controller.js';
+import { AuthController } from './auth.controller.js';
+import { BookingController } from './booking.controller.js';
+import { PaymentController } from './payment.controller.js';
+import { ShowtimeController } from './showtime.controller.js';
+import { VenueController } from './venue.controller.js';
+import { TicketController } from './ticket.controller.js';
 
-// Re-export controller classes for direct instantiation
-export { MovieController } from './movie.controller.simple';
-// export { UserController } from './user.controller';
-// export { AuthController } from './auth.controller';
+// Export all controllers
+export * from './movie.controller.js';
+export * from './user.controller.js';
+export * from './auth.controller.js';
+export * from './booking.controller.js';
+export * from './payment.controller.js';
+export * from './showtime.controller.js';
+export * from './venue.controller.js';
+export * from './ticket.controller.js';
 
 // Controller factory function for dependency injection
 export const createControllers = () => ({
   movieController: new MovieController(),
-  // userController: new UserController(),
-  // authController: new AuthController(),
+  userController: new UserController(),
+  authController: new AuthController(),
+  bookingController: new BookingController(),
+  paymentController: new PaymentController(),
+  showtimeController: new ShowtimeController(),
+  venueController: new VenueController(),
+  ticketController: new TicketController(),
 });
 
 // Controller registry for easy access
 export const controllerRegistry = {
   movie: 'MovieController',
-  // user: 'UserController', 
-  // auth: 'AuthController',
+  user: 'UserController', 
+  auth: 'AuthController',
+  booking: 'BookingController',
+  payment: 'PaymentController',
+  showtime: 'ShowtimeController',
+  venue: 'VenueController',
+  ticket: 'TicketController',
 } as const;
 
 export type ControllerType = keyof typeof controllerRegistry;

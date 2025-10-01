@@ -19,7 +19,8 @@ export interface AuthResponse {
     avatar?: string;
     role: string;
   };
-  token: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface JwtPayload {
