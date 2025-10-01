@@ -18,8 +18,8 @@ export class AuthService {
     password: string;
     name: string;
     username?: string;
+    role?: UserRole;
   }): Promise<{ user: User; accessToken: string; refreshToken: string }> {
-    // Check if user already exists
     const existingUser = await this.userService.getUserByEmail(userData.email);
     if (existingUser) {
       throw new Error('User already exists with this email');
@@ -32,13 +32,19 @@ export class AuthService {
     const newUser = await this.userService.createUser({
       ...userData,
       password: hashedPassword,
-      role: UserRole.USER,
-      isActive: false
+      role: userData.role || UserRole.USER,
+      isActive: true
     });
 
+    console.log('Created user object:', newUser);
+    console.log('User ID:', newUser.id);
+    console.log('User _id:', (newUser as any)._id);
+
     // Generate tokens
-    const accessToken = this.generateAccessToken(newUser.id);
-    const refreshToken = await this.generateRefreshToken(newUser.id);
+    const userId = newUser.id || (newUser as any)._id?.toString();
+    console.log('Using userId for token:', userId);
+    const accessToken = this.generateAccessToken(userId);
+    const refreshToken = await this.generateRefreshToken(userId);
 
     return {
       user: newUser,
@@ -60,9 +66,15 @@ export class AuthService {
       throw new Error('Invalid credentials');
     }
 
+    console.log('Login user object:', user);
+    console.log('Login User ID:', user.id);
+    console.log('Login User _id:', (user as any)._id);
+
     // Generate tokens
-    const accessToken = this.generateAccessToken(user.id);
-    const refreshToken = await this.generateRefreshToken(user.id);
+    const userId = user.id || (user as any)._id?.toString();
+    console.log('Using userId for login token:', userId);
+    const accessToken = this.generateAccessToken(userId);
+    const refreshToken = await this.generateRefreshToken(userId);
 
     return {
       user,
@@ -76,17 +88,21 @@ export class AuthService {
   }
 
   private generateAccessToken(userId: string): string {
-    return jwt.sign(
-      { userId, type: 'access' },
+    const payload = { userId, type: 'access' };
+    console.log('Generating token with payload:', payload);
+    const token = jwt.sign(
+      payload,
       this.jwtSecret,
-      { expiresIn: '15m' } // Short-lived access token
+      { expiresIn: '15m' } // Short-lived access token - NOT stored in DB
     );
+    console.log('Generated token:', token.substring(0, 50) + '...');
+    return token;
   }
 
   private async generateRefreshToken(userId: string): Promise<string> {
     const refreshToken = crypto.randomBytes(64).toString('hex');
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days - stored in DB
 
     // Save refresh token to database
     await this.userService.updateRefreshToken(userId, refreshToken, expiresAt);
@@ -102,8 +118,9 @@ export class AuthService {
     }
 
     // Generate new tokens
-    const newAccessToken = this.generateAccessToken(user.id);
-    const newRefreshToken = await this.generateRefreshToken(user.id);
+    const userId = user.id || (user as any)._id?.toString();
+    const newAccessToken = this.generateAccessToken(userId);
+    const newRefreshToken = await this.generateRefreshToken(userId);
 
     return {
       accessToken: newAccessToken,
@@ -113,8 +130,19 @@ export class AuthService {
 
   verifyToken(token: string): { userId: string } | null {
     try {
-      return jwt.verify(token, this.jwtSecret) as { userId: string };
+      console.log('Verifying token with secret:', this.jwtSecret.substring(0, 10) + '...');
+      const decoded = jwt.verify(token, this.jwtSecret) as any;
+      console.log('Token decoded successfully:', decoded);
+      
+      // Check if userId exists in the decoded token
+      if (!decoded.userId) {
+        console.log('ERROR: userId not found in decoded token');
+        return null;
+      }
+      
+      return { userId: decoded.userId };
     } catch (error) {
+      console.log('Token verification error:', error instanceof Error ? error.message : 'Unknown error');
       return null;
     }
   }

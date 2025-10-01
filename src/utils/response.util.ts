@@ -16,7 +16,7 @@ export class ResponseBuilder {
    */
   success(message: string = 'Success'): ResponseBuilder {
     this.response.success = true;
-    this.response.status = ResponseStatus.SUCCESS;
+    this.response.responseStatus = ResponseStatus.SUCCESS;
     this.response.message = message;
     return this;
   }
@@ -26,7 +26,7 @@ export class ResponseBuilder {
    */
   error(message: string = 'Error occurred'): ResponseBuilder {
     this.response.success = false;
-    this.response.status = ResponseStatus.ERROR;
+    this.response.responseStatus = ResponseStatus.ERROR;
     this.response.message = message;
     return this;
   }
@@ -36,7 +36,7 @@ export class ResponseBuilder {
    */
   warning(message: string = 'Warning'): ResponseBuilder {
     this.response.success = true;
-    this.response.status = ResponseStatus.WARNING;
+    this.response.responseStatus = ResponseStatus.WARNING;
     this.response.message = message;
     return this;
   }
@@ -74,6 +74,7 @@ export class ResponseBuilder {
    * Build and send response
    */
   send(res: Response, statusCode: HttpStatus = HttpStatus.OK): void {
+    this.response.status = statusCode;
     res.status(statusCode).json(this.response);
   }
 

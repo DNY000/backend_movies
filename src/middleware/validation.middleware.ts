@@ -20,9 +20,17 @@ export const validateRegister = createValidation.body({
 
 // Movie validation middleware (basic fields only)
 export const validateMovieBasic = createValidation.body({
-  title: validate.field('Title').required().length(1, 200),
-  description: validate.field('Description').required().length(10, 1000),
-  durationMinutes: validate.field('Duration').required().range(1, 600),
+  // No validation - let MongoDB schema handle it
+});
+
+// Movie query/filter validation (optional parameters)
+export const validateMovieQuery = createValidation.query({
+  search: validate.field('Search').length(1, 100), // Optional
+  genre: validate.field('Genre').length(1, 50), // Optional
+  year: validate.field('Year').range(1900, 2030), // Optional
+  rating: validate.field('Rating').range(0, 10), // Optional
+  page: validate.field('Page').range(1, 1000), // Optional
+  limit: validate.field('Limit').range(1, 100), // Optional
 });
 
 // User validation middleware

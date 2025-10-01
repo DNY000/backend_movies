@@ -7,11 +7,14 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import { routes } from './routes/index.js'
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js'
 import { corsMiddleware } from './middleware/cors.middleware.js'
 import { appConfig } from './config/app.config.js'
 import { DatabaseConnection } from './database/connection.js'
+// Import all models to register them with Mongoose
+import './database/models/index.js'
 
 class MoviesApp {
   private app = express()
@@ -27,6 +30,7 @@ class MoviesApp {
   private setupMiddleware(): void {
     this.app.use(cors())
     this.app.use(corsMiddleware)
+    this.app.use(cookieParser()) // Add cookie parser middleware
     this.app.use(express.json({ limit: '10mb' }))
     this.app.use(express.urlencoded({ extended: true }))
   }

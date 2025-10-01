@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { MovieController } from '../controllers/movie.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
-import { validateMovie } from '../middleware/validation.middleware.js';
+import { validateMovieBasic } from '../middleware/validation.middleware.js';
 
 const router = Router();
 const movieController = new MovieController();
@@ -12,8 +12,8 @@ router.get('/search', movieController.getAllMovies.bind(movieController)); // Wi
 router.get('/:id', movieController.getMovieById.bind(movieController));
 
 // Protected routes (require authentication)
-router.post('/', authMiddleware, validateMovie, movieController.createMovie.bind(movieController));
-router.put('/:id', authMiddleware, validateMovie, movieController.updateMovie.bind(movieController));
+router.post('/', authMiddleware, validateMovieBasic, movieController.createMovie.bind(movieController));
+router.put('/:id', authMiddleware, validateMovieBasic, movieController.updateMovie.bind(movieController));
 router.delete('/:id', authMiddleware, movieController.deleteMovie.bind(movieController));
 
 export { router as movieRoutes };

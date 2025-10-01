@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { HttpStatus } from '../types/common.types.js';
 
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   // Set CORS headers
@@ -9,7 +10,7 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction):
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
+    res.status(HttpStatus.OK).end();
     return;
   }
 

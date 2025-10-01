@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { HttpStatus } from '../types/common.types.js';
 import { movieRoutes } from './movie.routes.js';
 import { userRoutes } from './user.routes.js';
 import { authRoutes } from './auth.routes.js';
@@ -20,8 +21,9 @@ router.use('/api/payments', paymentRoutes);
 
 // Health check
 router.get('/health', (req, res) => {
-  res.status(200).json({
+  res.status(HttpStatus.OK).json({
     success: true,
+    status: HttpStatus.OK,
     message: 'Server is running',
     timestamp: new Date().toISOString()
   });

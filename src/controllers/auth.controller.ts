@@ -21,7 +21,19 @@ export class AuthController {
       const userData = req.body;
       const result = await this.authService.register(userData);
       
-      sendSuccess(res, result, 'User registered successfully', HttpStatus.CREATED);
+      // Set refresh token as HttpOnly cookie
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      });
+      
+      // Send only access token and user data to client
+      sendSuccess(res, {
+        user: result.user,
+        accessToken: result.accessToken
+      }, 'User registered successfully', HttpStatus.CREATED);
     } catch (error) {
       sendError(res, 'Registration failed', error instanceof Error ? error.message : 'Unknown error', HttpStatus.BAD_REQUEST);
     }
@@ -35,7 +47,19 @@ export class AuthController {
       const { email, password } = req.body;
       const result = await this.authService.login(email, password);
       
-      sendSuccess(res, result, 'Login successful');
+      // Set refresh token as HttpOnly cookie
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      });
+      
+      // Send only access token and user data to client
+      sendSuccess(res, {
+        user: result.user,
+        accessToken: result.accessToken
+      }, 'Login successful');
     } catch (error) {
       sendUnauthorized(res, 'Login failed');
     }
@@ -49,6 +73,13 @@ export class AuthController {
         await this.authService.logout(userId);
       }
       
+      // Clear refresh token cookie
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+      });
+      
       sendSuccess(res, null, 'Logout successful');
     } catch (error) {
       sendError(res, 'Logout failed', error instanceof Error ? error.message : 'Unknown error');
@@ -58,19 +89,37 @@ export class AuthController {
   // POST /api/auth/refresh
   async refresh(req: Request, res: Response): Promise<void> {
     try {
-      const { refreshToken } = req.body;
+      // Get refresh token from HttpOnly cookie
+      const refreshToken = req.cookies?.refreshToken;
       
       if (!refreshToken) {
-        return sendBadRequest(res, 'Refresh token is required');
+        return sendUnauthorized(res, 'Refresh token not found');
       }
 
       const result = await this.authService.refreshAccessToken(refreshToken);
       
       if (!result) {
+        // Clear invalid refresh token cookie
+        res.clearCookie('refreshToken', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict'
+        });
         return sendUnauthorized(res, 'Invalid or expired refresh token');
       }
 
-      sendSuccess(res, result, 'Tokens refreshed successfully');
+      // Set new refresh token as HttpOnly cookie
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      });
+
+      // Send only new access token to client
+      sendSuccess(res, {
+        accessToken: result.accessToken
+      }, 'Access token refreshed successfully');
     } catch (error) {
       sendError(res, 'Token refresh failed', error instanceof Error ? error.message : 'Unknown error');
     }

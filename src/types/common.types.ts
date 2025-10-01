@@ -85,7 +85,8 @@ export enum ResponseStatus {
 // Generic API Response Interface
 export interface ApiResponse<T = any> {
   success: boolean;
-  status: ResponseStatus;
+  status: number; // HTTP status code (200, 201, 400, 404, etc.)
+  responseStatus: ResponseStatus; // Application status (success, error, warning, info)
   message: string;
   data?: T;
   error?: string;

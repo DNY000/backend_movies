@@ -1,4 +1,3 @@
-// Services index file
 export * from './auth.service.js';
 export * from './user.service.js';
 export * from './movie.service.js';

@@ -11,6 +11,11 @@ export class ValidationFactory {
    */
   static createSchemaMiddleware(schema: SchemaValidator) {
     return (req: Request, res: Response, next: NextFunction): void => {
+      // Skip validation for GET requests or if no body exists
+      if (req.method === 'GET' || !req.body || Object.keys(req.body).length === 0) {
+        return next();
+      }
+      
       const errors = schema.validate(req.body);
       
       if (Object.keys(errors).length > 0) {
@@ -30,6 +35,11 @@ export class ValidationFactory {
    */
   static createFieldMiddleware(validators: Record<string, ValidationBuilder>) {
     return (req: Request, res: Response, next: NextFunction): void => {
+      // Skip validation for GET requests or if no body exists
+      if (req.method === 'GET' || !req.body || Object.keys(req.body).length === 0) {
+        return next();
+      }
+      
       const errors: Record<string, string> = {};
       
       for (const [fieldName, validator] of Object.entries(validators)) {
