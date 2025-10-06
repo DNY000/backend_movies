@@ -2,7 +2,6 @@ import { Request, Response } from 'express'
 import { PaymentService, PaymentRequest } from '../services/payment.service.js'
 import { sendSuccess, sendError, sendBadRequest, sendNotFound } from '../utils/response.util.js'
 import { HttpStatus } from '../types/common.types.js'
-import { validate } from '../utils/validation.util.js'
 
 export class PaymentController {
   private svc = new PaymentService()
@@ -11,21 +10,21 @@ export class PaymentController {
   async initializePayment(req: Request, res: Response): Promise<void> {
     try {
       const { bookingId, userId, amount, method, returnUrl, cancelUrl } = req.body
-      
+
       // Advanced validation
       if (!['card', 'vnpay', 'momo', 'zalopay', 'bank_transfer', 'e_wallet', 'cash'].includes(method)) {
         return sendBadRequest(res, 'Invalid payment method')
       }
-      
+
       const paymentRequest: PaymentRequest = {
         bookingId,
         userId,
         amount,
         method,
         returnUrl,
-        cancelUrl
+        cancelUrl,
       }
-      
+
       const response = await this.svc.initializePayment(paymentRequest)
       sendSuccess(res, response, 'Payment initialized successfully', HttpStatus.CREATED)
     } catch (err: any) {
@@ -38,9 +37,9 @@ export class PaymentController {
     try {
       const { id } = req.params
       const { gatewayTransactionId } = req.body
-      
+
       const success = await this.svc.confirmPayment(id, gatewayTransactionId)
-      
+
       if (success) {
         sendSuccess(res, { confirmed: true }, 'Payment confirmed successfully')
       } else {
@@ -55,13 +54,13 @@ export class PaymentController {
   async getPaymentStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      
+
       const payment = await this.svc.getPaymentStatus(id)
-      
+
       if (!payment) {
         return sendNotFound(res, 'Payment not found')
       }
-      
+
       sendSuccess(res, payment, 'Payment status retrieved successfully')
     } catch (err: any) {
       sendError(res, 'Error retrieving payment status', err?.message || 'Unknown error')
@@ -73,7 +72,7 @@ export class PaymentController {
     try {
       const { method } = req.params
       const webhookData = req.body
-      
+
       // Handle different payment gateway webhooks
       switch (method) {
         case 'vnpay':
@@ -88,7 +87,7 @@ export class PaymentController {
         default:
           return sendBadRequest(res, 'Unsupported webhook method')
       }
-      
+
       sendSuccess(res, { received: true }, 'Webhook processed successfully')
     } catch (err: any) {
       sendError(res, 'Error processing webhook', err?.message || 'Unknown error')
@@ -100,10 +99,10 @@ export class PaymentController {
   async capture(req: Request, res: Response): Promise<void> {
     try {
       const { bookingId, userId, amount, method } = req.body
-      
+
       // Advanced validation: Check payment method validity, amount matches booking, etc.
       // This is business logic validation
-      
+
       const data = await this.svc.capture({ bookingId, userId, amount, method })
       sendSuccess(res, data, 'Payment captured successfully', HttpStatus.CREATED)
     } catch (err: any) {
@@ -139,5 +138,3 @@ export class PaymentController {
     }
   }
 }
-
-

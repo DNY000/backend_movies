@@ -1,10 +1,7 @@
 import { TicketModel } from '../database/models/ticket.model.js'
 import { BookingModel } from '../database/models/booking.model.js'
 import { ShowtimeModel } from '../database/models/showtime.model.js'
-import { SeatModel } from '../database/models/seat.model.js'
-import { UserModel } from '../database/models/user.model.js'
-import { MovieModel } from '../database/models/movie.model.js'
-import { CinemaModel } from '../database/models/cinema.model.js'
+// Removed unused imports
 import { RoomModel } from '../database/models/room.model.js'
 import crypto from 'crypto'
 
@@ -36,10 +33,7 @@ export class TicketService {
    */
   async generateTickets(bookingId: string): Promise<TicketGenerationResult> {
     // Get booking with all related data
-    const booking = await BookingModel.findById(bookingId)
-      .populate('userId')
-      .populate('showtimeId')
-      .lean()
+    const booking = await BookingModel.findById(bookingId).populate('userId').populate('showtimeId').lean()
 
     if (!booking) {
       throw new Error('Booking not found')
@@ -50,19 +44,14 @@ export class TicketService {
     }
 
     // Get tickets for this booking
-    const tickets = await TicketModel.find({ bookingId })
-      .populate('seatId')
-      .lean()
+    const tickets = await TicketModel.find({ bookingId }).populate('seatId').lean()
 
     if (tickets.length === 0) {
       throw new Error('No tickets found for this booking')
     }
 
     // Get showtime details
-    const showtime = await ShowtimeModel.findById(booking.showtimeId)
-      .populate('movieId')
-      .populate('roomId')
-      .lean()
+    const showtime = await ShowtimeModel.findById(booking.showtimeId).populate('movieId').populate('roomId').lean()
 
     if (!showtime) {
       throw new Error('Showtime not found')
@@ -92,7 +81,7 @@ export class TicketService {
         bookingId: bookingId,
         ticketCode,
         showtimeId: booking.showtimeId.toString(),
-        seatId: ticket.seatId.toString()
+        seatId: ticket.seatId.toString(),
       })
 
       const ticketInfo: TicketInfo = {
@@ -108,7 +97,7 @@ export class TicketService {
         ticketCode,
         customerName: (user as any)?.name || 'Unknown Customer',
         customerEmail: (user as any)?.email || '',
-        status: 'valid'
+        status: 'valid',
       }
 
       ticketInfos.push(ticketInfo)
@@ -117,7 +106,7 @@ export class TicketService {
     return {
       tickets: ticketInfos,
       totalTickets: ticketInfos.length,
-      bookingReference: this.generateBookingReference(bookingId)
+      bookingReference: this.generateBookingReference(bookingId),
     }
   }
 
@@ -132,7 +121,7 @@ export class TicketService {
     try {
       // Decode QR data
       const ticketData = this.decodeQRData(qrData)
-      
+
       // Get ticket from database
       const ticket = await TicketModel.findById(ticketData.ticketId)
         .populate('bookingId')
@@ -157,7 +146,7 @@ export class TicketService {
 
       const now = new Date()
       const showtimeStart = new Date((showtime as any).startTime)
-      
+
       if (now > showtimeStart) {
         return { valid: false, message: 'Ticket has expired (showtime passed)' }
       }
@@ -168,7 +157,7 @@ export class TicketService {
       return {
         valid: true,
         ticket: ticketInfo || undefined,
-        message: 'Ticket is valid'
+        message: 'Ticket is valid',
       }
     } catch (error) {
       return { valid: false, message: 'Invalid QR code format' }
@@ -183,7 +172,7 @@ export class TicketService {
       // In a real system, you might want to add a 'usedAt' field to the ticket model
       // For now, we'll use metadata to track usage
       await TicketModel.findByIdAndUpdate(ticketId, {
-        $set: { 'metadata.usedAt': new Date(), 'metadata.status': 'used' }
+        $set: { 'metadata.usedAt': new Date(), 'metadata.status': 'used' },
       })
       return true
     } catch (error) {
@@ -198,17 +187,17 @@ export class TicketService {
     const ticket = await TicketModel.findById(ticketId)
       .populate({
         path: 'bookingId',
-        populate: { path: 'userId' }
+        populate: { path: 'userId' },
       })
       .populate({
         path: 'showtimeId',
         populate: [
           { path: 'movieId' },
-          { 
+          {
             path: 'roomId',
-            populate: { path: 'cinemaId' }
-          }
-        ]
+            populate: { path: 'cinemaId' },
+          },
+        ],
       })
       .populate('seatId')
       .lean()
@@ -231,7 +220,7 @@ export class TicketService {
       bookingId: booking._id.toString(),
       ticketCode,
       showtimeId: showtime._id.toString(),
-      seatId: seat._id.toString()
+      seatId: seat._id.toString(),
     })
 
     return {
@@ -247,7 +236,7 @@ export class TicketService {
       ticketCode,
       customerName: user?.name || 'Unknown Customer',
       customerEmail: user?.email || '',
-      status: (ticket as any).metadata?.status || 'valid'
+      status: (ticket as any).metadata?.status || 'valid',
     }
   }
 
@@ -275,7 +264,7 @@ export class TicketService {
     try {
       await TicketModel.updateMany(
         { bookingId },
-        { $set: { 'metadata.status': 'cancelled', 'metadata.cancelledAt': new Date() } }
+        { $set: { 'metadata.status': 'cancelled', 'metadata.cancelledAt': new Date() } },
       )
       return true
     } catch (error) {
@@ -318,9 +307,9 @@ export class TicketService {
       c: data.ticketCode,
       s: data.showtimeId,
       seat: data.seatId,
-      ts: Date.now()
+      ts: Date.now(),
     }
-    
+
     return Buffer.from(JSON.stringify(qrPayload)).toString('base64')
   }
 
@@ -342,7 +331,7 @@ export class TicketService {
       ticketCode: decoded.c,
       showtimeId: decoded.s,
       seatId: decoded.seat,
-      timestamp: decoded.ts
+      timestamp: decoded.ts,
     }
   }
 }

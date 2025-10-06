@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { BookingService } from '../services/booking.service.js'
 import { sendSuccess, sendError, sendNotFound, sendBadRequest } from '../utils/response.util.js'
 import { HttpStatus } from '../types/common.types.js'
-import { validate } from '../utils/validation.util.js'
+// Removed unused import 'validate'
 
 export class BookingController {
   private svc = new BookingService()
@@ -12,10 +12,10 @@ export class BookingController {
   async create(req: Request, res: Response): Promise<void> {
     try {
       const { userId, showtimeId, seatIds, promotionCode } = req.body
-      
+
       // Advanced validation: Check seat availability, showtime validity, etc.
       // This is business logic validation that goes beyond basic field validation
-      
+
       const data = await this.svc.create({ userId, showtimeId, seatIds, promotionCode })
       sendSuccess(res, data, 'Booking created successfully', HttpStatus.CREATED)
     } catch (err: any) {
@@ -42,7 +42,7 @@ export class BookingController {
     try {
       const { userId } = req.params
       const { status } = req.query
-      
+
       const bookings = await this.svc.getUserBookings(userId, status as string)
       sendSuccess(res, bookings, 'User bookings retrieved successfully')
     } catch (err: any) {
@@ -55,7 +55,7 @@ export class BookingController {
     try {
       const { id } = req.params
       const { userId } = req.body
-      
+
       if (!userId) {
         return sendBadRequest(res, 'User ID is required')
       }
@@ -78,5 +78,3 @@ export class BookingController {
     }
   }
 }
-
-

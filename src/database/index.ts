@@ -27,12 +27,12 @@ async function main() {
   await mongoose.disconnect()
 }
 
-main().catch((err) => {
+main().catch(err => {
   // eslint-disable-next-line no-console
   console.error('Database init failed:', err)
   process.exit(1)
 })
 
 // Database index file
-export * from './connection';
-export * from './repositories';
+export * from './connection.js'
+export * from './repositories/index.js'

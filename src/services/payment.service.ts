@@ -54,7 +54,7 @@ export class PaymentService {
       method: params.method,
       status: 'pending',
       transactionId,
-      metadata: params.metadata
+      metadata: params.metadata,
     })
 
     const paymentId = (payment as any)._id.toString()
@@ -94,15 +94,15 @@ export class PaymentService {
   /**
    * Process card payment
    */
-  private async processCardPayment(paymentId: string, params: PaymentRequest): Promise<PaymentResponse> {
+  private async processCardPayment(paymentId: string, _params: PaymentRequest): Promise<PaymentResponse> {
     await PaymentModel.findByIdAndUpdate(paymentId, { status: 'processing' })
-    
+
     return {
       paymentId,
       transactionId: await this.getTransactionId(paymentId),
       status: 'processing',
       paymentUrl: `https://payment-gateway.com/pay/${paymentId}`,
-      message: 'Redirecting to card payment gateway'
+      message: 'Redirecting to card payment gateway',
     }
   }
 
@@ -117,7 +117,7 @@ export class PaymentService {
       transactionId: await this.getTransactionId(paymentId),
       status: 'processing',
       paymentUrl: `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?amount=${params.amount}`,
-      message: 'Redirecting to VNPay'
+      message: 'Redirecting to VNPay',
     }
   }
 
@@ -132,14 +132,14 @@ export class PaymentService {
       transactionId: await this.getTransactionId(paymentId),
       status: 'processing',
       qrCode: `momo://pay?amount=${params.amount}&orderId=${paymentId}`,
-      message: 'Scan QR code with MoMo app'
+      message: 'Scan QR code with MoMo app',
     }
   }
 
   /**
    * Process ZaloPay payment
    */
-  private async processZaloPayPayment(paymentId: string, params: PaymentRequest): Promise<PaymentResponse> {
+  private async processZaloPayPayment(paymentId: string, _params: PaymentRequest): Promise<PaymentResponse> {
     await PaymentModel.findByIdAndUpdate(paymentId, { status: 'processing' })
 
     return {
@@ -147,26 +147,26 @@ export class PaymentService {
       transactionId: await this.getTransactionId(paymentId),
       status: 'processing',
       paymentUrl: `https://zalopay.vn/pay/${paymentId}`,
-      message: 'Redirecting to ZaloPay'
+      message: 'Redirecting to ZaloPay',
     }
   }
 
   /**
    * Process bank transfer
    */
-  private async processBankTransfer(paymentId: string, params: PaymentRequest): Promise<PaymentResponse> {
+  private async processBankTransfer(paymentId: string, _params: PaymentRequest): Promise<PaymentResponse> {
     return {
       paymentId,
       transactionId: await this.getTransactionId(paymentId),
       status: 'pending',
-      message: 'Please transfer money to the provided bank account'
+      message: 'Please transfer money to the provided bank account',
     }
   }
 
   /**
    * Process e-wallet payment
    */
-  private async processEWallet(paymentId: string, params: PaymentRequest): Promise<PaymentResponse> {
+  private async processEWallet(paymentId: string, _params: PaymentRequest): Promise<PaymentResponse> {
     await PaymentModel.findByIdAndUpdate(paymentId, { status: 'processing' })
 
     return {
@@ -174,19 +174,19 @@ export class PaymentService {
       transactionId: await this.getTransactionId(paymentId),
       status: 'processing',
       paymentUrl: `https://ewallet.com/pay/${paymentId}`,
-      message: 'Redirecting to e-wallet payment'
+      message: 'Redirecting to e-wallet payment',
     }
   }
 
   /**
    * Process cash payment
    */
-  private async processCashPayment(paymentId: string, params: PaymentRequest): Promise<PaymentResponse> {
+  private async processCashPayment(paymentId: string, _params: PaymentRequest): Promise<PaymentResponse> {
     return {
       paymentId,
       transactionId: await this.getTransactionId(paymentId),
       status: 'pending',
-      message: 'Please pay cash at the cinema counter'
+      message: 'Please pay cash at the cinema counter',
     }
   }
 
@@ -203,7 +203,7 @@ export class PaymentService {
     await PaymentModel.findByIdAndUpdate(paymentId, {
       status: 'completed',
       gatewayTransactionId,
-      processedAt: new Date()
+      processedAt: new Date(),
     })
 
     // Update booking status
@@ -212,8 +212,8 @@ export class PaymentService {
     // Generate tickets automatically after payment confirmation
     try {
       await this.ticketService.generateTickets(payment.bookingId.toString())
-    } catch (error) {
-      console.error('Error generating tickets after payment confirmation:', error)
+    } catch (_error) {
+      // swallow ticket generation error
       // Don't fail the payment confirmation if ticket generation fails
       // Tickets can be generated manually later
     }
@@ -253,11 +253,11 @@ export class PaymentService {
       bookingId: params.bookingId,
       userId: params.userId,
       amount: params.amount,
-      method: params.method as PaymentMethod
+      method: params.method as PaymentMethod,
     }
 
     const response = await this.initializePayment(paymentRequest)
-    
+
     // Auto-confirm for cash and bank transfer
     if (['cash', 'bank_transfer'].includes(params.method)) {
       await this.confirmPayment(response.paymentId)
@@ -266,5 +266,3 @@ export class PaymentService {
     return response
   }
 }
-
-
