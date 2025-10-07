@@ -8,6 +8,9 @@ import { venueRoutes } from './venue.routes.js'
 import { bookingRoutes } from './booking.routes.js'
 import { paymentRoutes } from './payment.routes.js'
 import { seatRoutes } from './seat.routes.js'
+import { notificationRoutes } from './notification.routes.js'
+import { scheduledNotificationRoutes } from './scheduled-notification.routes.js'
+import { ticketRoutes } from './ticket.routes.js'
 
 const router = Router()
 
@@ -20,6 +23,9 @@ router.use('/api/venues', venueRoutes)
 router.use('/api/bookings', bookingRoutes)
 router.use('/api/payments', paymentRoutes)
 router.use('/api/seats', seatRoutes)
+router.use('/api/notifications', notificationRoutes)
+router.use('/api/tickets', ticketRoutes)
+router.use('/api/scheduled-notifications', scheduledNotificationRoutes)
 
 // Health check
 router.get('/health', (req, res) => {

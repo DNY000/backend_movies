@@ -1,4 +1,4 @@
-import { Movie } from '../../types/movie.types.js';
+import { Movie } from '../../types/movie.types.js'
 import { MovieModel } from '../models/movie.model.js'
 import { GenreModel } from '../models/genre.model.js'
 import { MovieFilters, MovieSearchResult } from '../../services/movie.service.js'
@@ -39,20 +39,17 @@ export class MovieRepository {
 
   async findByYear(year: number): Promise<any[]> {
     return await MovieModel.find({
-      releaseDate: { $gte: new Date(`${year}-01-01T00:00:00Z`), $lte: new Date(`${year}-12-31T23:59:59Z`) }
+      releaseDate: { $gte: new Date(`${year}-01-01T00:00:00Z`), $lte: new Date(`${year}-12-31T23:59:59Z`) },
     }).lean()
   }
 
   async findWithFilters(filters: MovieFilters): Promise<MovieSearchResult> {
     const query: any = {}
-    
+
     // Search filter
     if (filters.search) {
       const searchRegex = new RegExp(filters.search, 'i')
-      query.$or = [
-        { title: searchRegex },
-        { description: searchRegex }
-      ]
+      query.$or = [{ title: searchRegex }, { description: searchRegex }]
     }
 
     // Genre filter
@@ -65,9 +62,9 @@ export class MovieRepository {
 
     // Year filter
     if (filters.year) {
-      query.releaseDate = { 
-        $gte: new Date(`${filters.year}-01-01T00:00:00Z`), 
-        $lte: new Date(`${filters.year}-12-31T23:59:59Z`) 
+      query.releaseDate = {
+        $gte: new Date(`${filters.year}-01-01T00:00:00Z`),
+        $lte: new Date(`${filters.year}-12-31T23:59:59Z`),
       }
     }
 
@@ -87,22 +84,16 @@ export class MovieRepository {
     }
 
     // Calculate pagination
-    const skip = (filters.page - 1) * filters.limit
-    
+    const skip = filters.page * filters.limit
+
     // Build sort object
     const sort: any = {}
     sort[filters.sortBy] = filters.sortOrder === 'asc' ? 1 : -1
 
     // Execute query with pagination
     const [movies, total] = await Promise.all([
-      MovieModel.find(query)
-        .populate('genres')
-        .populate('languages')
-        .sort(sort)
-        .skip(skip)
-        .limit(filters.limit)
-        .lean(),
-      MovieModel.countDocuments(query)
+      MovieModel.find(query).populate('genres').populate('languages').sort(sort).skip(skip).limit(filters.limit).lean(),
+      MovieModel.countDocuments(query),
     ])
 
     const totalPages = Math.ceil(total / filters.limit)
@@ -112,8 +103,8 @@ export class MovieRepository {
       total,
       page: filters.page,
       totalPages,
-      hasNext: filters.page < totalPages,
-      hasPrev: filters.page > 1
+      hasNext: filters.page < totalPages - 1,
+      hasPrev: filters.page > 0,
     }
   }
 
@@ -137,8 +128,8 @@ export class MovieRepository {
 
   async findUpcoming(limit: number): Promise<any[]> {
     const now = new Date()
-    const movies = await MovieModel.find({ 
-      releaseDate: { $gt: now }
+    const movies = await MovieModel.find({
+      releaseDate: { $gt: now },
     })
       .populate('genres')
       .sort({ releaseDate: 1 })
@@ -149,13 +140,13 @@ export class MovieRepository {
 
   async findNowShowing(limit: number): Promise<any[]> {
     const now = new Date()
-    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000))
-    
-    const movies = await MovieModel.find({ 
-      releaseDate: { 
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    const movies = await MovieModel.find({
+      releaseDate: {
         $gte: thirtyDaysAgo,
-        $lte: now
-      }
+        $lte: now,
+      },
     })
       .populate('genres')
       .sort({ releaseDate: -1 })

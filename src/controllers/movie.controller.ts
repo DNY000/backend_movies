@@ -20,8 +20,8 @@ export class MovieController {
         rating,
         trending,
         mostPopular,
-        page = 1,
-        limit = 20,
+        page = 0,
+        limit = 10,
         sortBy = 'releaseDate',
         sortOrder = 'desc',
       } = req.query

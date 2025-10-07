@@ -13,6 +13,7 @@ import { errorHandler, notFoundHandler } from './middleware/error.middleware.js'
 import { corsMiddleware } from './middleware/cors.middleware.js'
 import { appConfig } from './config/app.config.js'
 import { DatabaseConnection } from './database/connection.js'
+import { ScheduledNotificationService } from './services/scheduled-notification.service.js'
 // Import all models to register them with Mongoose
 import './database/models/index.js'
 
@@ -20,6 +21,7 @@ class MoviesApp {
   private app = express()
   private server: any
   private db = DatabaseConnection.getInstance()
+  private scheduledNotificationService = new ScheduledNotificationService()
 
   constructor() {
     this.setupMiddleware()
@@ -49,6 +51,10 @@ class MoviesApp {
 
   public async start(): Promise<void> {
     await this.db.connect()
+
+    // Khởi động scheduled notification service
+    this.scheduledNotificationService.startScheduledTasks()
+
     const basePort = appConfig.port
 
     const listen = (port: number) => {
@@ -72,13 +78,16 @@ class MoviesApp {
   }
 
   public async stop(): Promise<void> {
+    // Dừng scheduled notification service
+    this.scheduledNotificationService.stopScheduledTasks()
+
     if (this.server) this.server.close()
     await this.db.disconnect()
   }
 }
 
 const app = new MoviesApp()
-app.start().catch((err) => {
+app.start().catch(err => {
   // eslint-disable-next-line no-console
   console.error('Failed to start server:', err)
   process.exit(1)

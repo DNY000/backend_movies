@@ -13,7 +13,7 @@ Authorization: Bearer <access_token>
 
 #### Get Movies with Filters
 ```http
-GET /api/movies?search=action&genre=thriller&year=2024&rating=7&trending=true&page=1&limit=20
+GET /api/movies?search=action&genre=thriller&year=2024&rating=7&trending=true&page=0&limit=10
 ```
 
 #### Get Trending Movies

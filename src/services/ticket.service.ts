@@ -111,6 +111,46 @@ export class TicketService {
   }
 
   /**
+   * Get all tickets for a user (paginated)
+   */
+  async getUserTickets(
+    userId: string,
+    page: number = 0,
+    limit: number = 10,
+  ): Promise<{
+    tickets: TicketInfo[]
+    pagination: { page: number; limit: number; total: number; totalPages: number }
+  }> {
+    const skip = page * limit
+    const bookingIds = await BookingModel.find({ userId }).distinct('_id')
+
+    const [ticketDocs, total] = await Promise.all([
+      TicketModel.find({ bookingId: { $in: bookingIds } })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      TicketModel.countDocuments({ bookingId: { $in: bookingIds } }),
+    ])
+
+    const tickets: TicketInfo[] = []
+    for (const t of ticketDocs) {
+      const info = await this.getTicketInfo(t._id.toString())
+      if (info) tickets.push(info)
+    }
+
+    return {
+      tickets,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  }
+
+  /**
    * Validate ticket by QR code or ticket code
    */
   async validateTicket(qrData: string): Promise<{
